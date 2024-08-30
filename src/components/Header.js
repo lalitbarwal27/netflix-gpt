@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { auth } from "../utils/firebase";
-import { signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { addUser, removeUser } from "../utils/userSlice";
+import { LOGO_URL } from "../utils/constants";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -16,15 +18,33 @@ const Header = () => {
         // An error happened.
       });
   };
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const { displayName, email, photoURL, phoneNumber } = user;
+        dispatch(
+          addUser({
+            displayName: displayName,
+            email: email,
+            photoURL: photoURL,
+            phoneNumber: phoneNumber,
+          })
+        );
+        navigate("/browse");
+      } else {
+        dispatch(removeUser(null));
+        navigate("/");
+      }
+    });
+  }, []);
   return (
-    <div className="absolute w-screen z-10 px-8 py-2 bg-gradient-to-b from-black flex justify-between">
-      <img
-        src="https://cdn.cookielaw.org/logos/dd6b162f-1a32-456a-9cfe-897231c7763c/4345ea78-053c-46d2-b11e-09adaef973dc/Netflix_Logo_PMS.png"
-        alt="logo"
-        className="w-44 "
-      />
+    <div className="absolute w-full z-10 px-8 py-2 bg-gradient-to-b from-black flex justify-between">
+      <img src={LOGO_URL} alt="logo" className="w-44 " />
       {user && (
-        <div>
+        <div className="text-white">
           <p>{user.displayName}</p>
           <button onClick={() => signOutUser()}>Sign Out</button>
         </div>
